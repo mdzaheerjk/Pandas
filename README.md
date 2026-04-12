@@ -6,6 +6,7 @@
 ## What is Pandas?
 
 Pandas is the primary Python library for tabular data manipulation. It provides:
+
 - **Series** — a labelled 1-D array
 - **DataFrame** — a labelled 2-D table (the workhorse)
 - Reading/writing dozens of file formats
@@ -26,21 +27,36 @@ import numpy as np
 
 ### Series
 
-```python
-s = pd.Series([10, 20, 30])              # index auto-assigned 0,1,2
-s = pd.Series([10, 20, 30], index=["a","b","c"])
-s = pd.Series({"a": 10, "b": 20})        # from dict
+A labelled 1-D array — like a single spreadsheet column where every value has a named index.
 
-s["a"]           # 10
-s[["a","c"]]     # fancy indexing
-s[s > 15]        # boolean mask
+```python
+s = pd.Series([10, 20, 30])                        # index auto-assigned 0,1,2
+s = pd.Series([10, 20, 30], index=["a","b","c"])
+s = pd.Series({"a": 10, "b": 20})                  # from dict
+
+s["a"]           # → 10
+s[["a","c"]]     # fancy indexing → Series with a=10, c=30
+s[s > 15]        # boolean mask → b=20, c=30
 s.values         # numpy array
 s.index          # Index object
 s.dtype
 s.name = "score"
 ```
 
+**Sample output:**
+
+```
+a    10
+b    20
+c    30
+dtype: int64
+```
+
+---
+
 ### DataFrame
+
+A labelled 2-D table — rows and columns, where each column is a Series.
 
 ```python
 df = pd.DataFrame({
@@ -53,13 +69,24 @@ df = pd.DataFrame([[1,2],[3,4]], columns=["A","B"], index=["r1","r2"])
 df = pd.DataFrame(records_list)          # list of dicts
 ```
 
-### Key attributes
+**Sample output:**
+
+```
+    name  age  score
+0  Alice   25   90.5
+1    Bob   30   85.0
+2  Carol   35   92.3
+```
+
+---
+
+### Key Attributes
 
 ```python
-df.shape          # (rows, cols)
+df.shape          # (3, 3) — rows × cols
 df.dtypes         # dtype per column
-df.columns        # column labels
-df.index          # row labels
+df.columns        # Index(['name', 'age', 'score'])
+df.index          # RangeIndex(start=0, stop=3, step=1)
 df.values         # underlying numpy array
 df.info()         # dtypes + non-null counts + memory
 df.describe()     # stats for numeric columns
@@ -67,9 +94,38 @@ df.describe(include="all")   # includes object/category cols
 df.head(5)        # first 5 rows
 df.tail(5)        # last 5 rows
 df.sample(5)      # 5 random rows
-df.size           # total elements
+df.size           # total elements (rows × cols)
 df.ndim           # always 2
 df.memory_usage(deep=True)
+```
+
+**Sample output of `df.describe()`:**
+
+```
+             age      score
+count   3.000000   3.000000
+mean   30.000000  89.266667
+std     5.000000   3.793976
+min    25.000000  85.000000
+25%    27.500000  87.750000
+50%    30.000000  90.500000
+75%    32.500000  91.400000
+max    35.000000  92.300000
+```
+
+**Sample output of `df.info()`:**
+
+```
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 3 entries, 0 to 2
+Data columns (total 3 columns):
+ #   Column  Non-Null Count  Dtype
+---  ------  --------------  -----
+ 0   name    3 non-null      object
+ 1   age     3 non-null      int64
+ 2   score   3 non-null      float64
+dtypes: float64(1), int64(1), object(1)
+memory usage: 200.0+ bytes
 ```
 
 ---
@@ -97,8 +153,8 @@ df = pd.read_csv("data.csv",
 
 # Excel
 df = pd.read_excel("data.xlsx", sheet_name="Sheet1")
-df = pd.read_excel("data.xlsx", sheet_name=0)         # by index
-all_sheets = pd.read_excel("data.xlsx", sheet_name=None)  # dict of dfs
+df = pd.read_excel("data.xlsx", sheet_name=0)            # by index
+all_sheets = pd.read_excel("data.xlsx", sheet_name=None) # dict of dfs
 
 # JSON
 df = pd.read_json("data.json")
@@ -129,11 +185,11 @@ df.to_excel("out.xlsx", sheet_name="Results", index=False)
 df.to_json("out.json", orient="records", indent=2)
 df.to_parquet("out.parquet", compression="snappy")
 df.to_sql("table_name", engine, if_exists="replace", index=False)
-df.to_markdown()      # returns markdown string
-df.to_string()        # plain text
-df.to_dict()          # dict of dicts
-df.to_dict("records") # list of dicts
-df.to_numpy()         # numpy array
+df.to_markdown()        # returns markdown string
+df.to_string()          # plain text
+df.to_dict()            # dict of dicts
+df.to_dict("records")   # list of dicts
+df.to_numpy()           # numpy array
 ```
 
 ---
@@ -142,38 +198,54 @@ df.to_numpy()         # numpy array
 
 ### `.loc` — label-based
 
+Selects rows and columns **by their label names**. Slices are **inclusive** on both ends.
+
 ```python
 df.loc[0]                      # row with label 0
-df.loc[0, "name"]              # single value
+df.loc[0, "name"]              # single value → "Alice"
 df.loc[0:2, "name":"score"]    # inclusive slice by label
 df.loc[[0,2], ["name","age"]]  # fancy selection
 df.loc[df["age"] > 28]         # boolean mask
 df.loc[df["age"] > 28, "name"] # filtered, single column
 ```
 
+**Sample output of `df.loc[df["age"] > 28]`:**
+
+```
+    name  age  score
+1    Bob   30   85.0
+2  Carol   35   92.3
+```
+
+---
+
 ### `.iloc` — integer position-based
+
+Selects rows and columns **by integer position** (like list indexing). Slices are **exclusive** at the end.
 
 ```python
 df.iloc[0]                     # first row
-df.iloc[0, 1]                  # row 0, col 1
+df.iloc[0, 1]                  # row 0, col 1 → 25
 df.iloc[0:3, 0:2]              # exclusive slice by position
 df.iloc[[0,2], [0,1]]          # list of positions
 df.iloc[-1]                    # last row
 ```
 
-### Column access
+**Sample output of `df.iloc[0:2, 0:2]`:**
 
-```python
-df["name"]                     # Series (preferred)
-df[["name","age"]]             # DataFrame (list of cols)
-df.name                        # attribute access (avoid: breaks on spaces, clashes)
+```
+    name  age
+0  Alice   25
+1    Bob   30
 ```
 
-### Boolean indexing
+---
+
+### Boolean Indexing
 
 ```python
 df[df["age"] > 25]
-df[(df["age"] > 25) & (df["score"] > 85)]   # & | ~ (not and/or)
+df[(df["age"] > 25) & (df["score"] > 85)]   # & | ~ (not and/or/not)
 df[df["name"].isin(["Alice","Bob"])]
 df[~df["name"].isin(["Carol"])]
 df[df["score"].between(85, 92)]
@@ -188,7 +260,7 @@ df.iat[0, 1]                   # by position — faster than .iloc for single va
 df.at[0, "name"] = "Alicia"    # fast scalar assignment
 ```
 
-### Setting values
+### Setting Values
 
 ```python
 df.loc[df["score"] > 90, "grade"] = "A"
@@ -201,7 +273,7 @@ df.loc[:, "score"] = df["score"] * 1.1
 
 ## DataFrame Operations
 
-### Adding & removing columns
+### Adding & Removing Columns
 
 ```python
 df["bonus"] = df["score"] * 0.1            # new column
@@ -215,7 +287,7 @@ df.pop("bonus")                            # drop & return column
 del df["bonus"]                            # in-place delete
 ```
 
-### Adding & removing rows
+### Adding & Removing Rows
 
 ```python
 new_row = pd.DataFrame([{"name":"Dave","age":28,"score":88}])
@@ -248,16 +320,22 @@ df.nlargest(3, "score")                    # top 3 by score
 df.nsmallest(3, "age")                     # bottom 3 by age
 ```
 
-### Copying
+**Sample output of `df.sort_values("age", ascending=False)`:**
 
-```python
-df2 = df.copy()       # deep copy — independent
-df2 = df.copy(deep=False)   # shallow — shares data
+```
+    name  age  score
+2  Carol   35   92.3
+1    Bob   30   85.0
+0  Alice   25   90.5
 ```
 
 ---
 
-## Missing Data (Data Cleaning — Core Topic)
+## Missing Data
+
+### Definition
+
+`NaN` (Not a Number) marks missing values. `NaT` is used for missing datetimes. Always inspect missing data before modelling.
 
 ### Detecting
 
@@ -271,9 +349,17 @@ df.isna().any()                    # True if any missing per column
 df.isna().all()                    # True if all missing per column
 df.isna().sum().sum()              # total missing in whole df
 
-# Visual overview
 print(df.info())                   # shows non-null counts
 df.isna().mean().sort_values(ascending=False)  # sorted % missing
+```
+
+**Sample output of `df.isna().sum()`:**
+
+```
+name     0
+age      1
+score    2
+dtype: int64
 ```
 
 ### Dropping
@@ -282,7 +368,7 @@ df.isna().mean().sort_values(ascending=False)  # sorted % missing
 df.dropna()                        # drop rows with ANY NaN
 df.dropna(how="all")               # drop rows where ALL are NaN
 df.dropna(axis=1)                  # drop columns with any NaN
-df.dropna(subset=["age","score"])  # only consider these cols for dropping
+df.dropna(subset=["age","score"])  # only consider these cols
 df.dropna(thresh=3)                # keep rows with at least 3 non-NaN values
 ```
 
@@ -292,31 +378,41 @@ df.dropna(thresh=3)                # keep rows with at least 3 non-NaN values
 df.fillna(0)                       # fill all NaN with 0
 df.fillna({"age": 0, "score": df["score"].mean()})   # per-column fill
 
-# Forward fill (carry last valid value forward)
-df.fillna(method="ffill")          # deprecated in 2.x → use:
+# Forward fill — carry last valid value forward
 df.ffill()
 df["col"].ffill()
 
-# Backward fill
+# Backward fill — use next valid value
 df.bfill()
 
-# Fill with stats
+# Fill with statistics
 df["age"].fillna(df["age"].mean())
 df["age"].fillna(df["age"].median())
 df["city"].fillna(df["city"].mode()[0])   # most frequent value
 
 # Interpolation
-df["price"].interpolate()                 # linear by default
-df["price"].interpolate(method="time")    # for time-indexed data
+df["price"].interpolate()                           # linear (default)
+df["price"].interpolate(method="time")              # time-indexed data
 df["price"].interpolate(method="polynomial", order=2)
+```
+
+**Sample output — before and after `fillna(mean)`:**
+
+```
+Before:         After fillna(87.75):
+score           score
+90.5      →     90.5
+NaN       →     87.75
+NaN       →     87.75
+92.3      →     92.3
 ```
 
 ### Replacing
 
 ```python
-df.replace(-999, np.nan)                  # replace sentinel with NaN
-df.replace(["-","?","NA"], np.nan)        # multiple values → NaN
-df.replace({"gender": {"M":"Male","F":"Female"}})  # per-column dict
+df.replace(-999, np.nan)                            # replace sentinel with NaN
+df.replace(["-","?","NA"], np.nan)                  # multiple values → NaN
+df.replace({"gender": {"M":"Male","F":"Female"}})   # per-column dict
 df["score"].replace({0: np.nan})
 ```
 
@@ -339,13 +435,12 @@ df["cat"] = df["cat"].astype("category")   # memory-efficient for low cardinalit
 pd.to_numeric(df["col"])                   # raises on non-numeric
 pd.to_numeric(df["col"], errors="coerce")  # non-numeric → NaN
 pd.to_numeric(df["col"], errors="ignore")  # leave non-numeric as-is
-df["col"].apply(pd.to_numeric, errors="coerce")
 
 # Datetime
 pd.to_datetime(df["date"])
 pd.to_datetime(df["date"], format="%Y-%m-%d")
-pd.to_datetime(df["date"], errors="coerce")    # bad dates → NaT
-pd.to_datetime(df[["year","month","day"]])      # from components
+pd.to_datetime(df["date"], errors="coerce")         # bad dates → NaT
+pd.to_datetime(df[["year","month","day"]])           # from components
 
 # Infer better dtypes automatically
 df = df.convert_dtypes()     # converts to best nullable dtypes
@@ -356,10 +451,12 @@ df = df.infer_objects()      # tries to infer object columns
 
 ## Duplicates
 
+A **duplicate** is a row that appears more than once. Duplicates inflate counts, distort statistics, and cause data leakage in ML.
+
 ```python
 df.duplicated()                            # bool Series — True for duplicates
-df.duplicated(subset=["name","age"])       # only these cols define duplicate
-df.duplicated(keep="first")               # default — mark all but first
+df.duplicated(subset=["name","age"])       # only these cols define a duplicate
+df.duplicated(keep="first")               # mark all but first occurrence
 df.duplicated(keep="last")                # mark all but last
 df.duplicated(keep=False)                 # mark ALL duplicates
 
@@ -371,98 +468,90 @@ df.drop_duplicates(keep="last")
 df.drop_duplicates(inplace=True)
 ```
 
+**Sample output — `df.duplicated(keep=False)`:**
+
+```
+    email    name    duplicated
+0  a@x.com  Alice   False
+1  b@x.com  Bob     False
+2  a@x.com  Alice2  True
+```
+
 ---
 
 ## String Operations (`.str` accessor)
+
+The `.str` accessor lets you apply string methods element-wise to a Series without writing a loop.
 
 ```python
 s = df["name"]
 
 # Case
-s.str.lower();  s.str.upper();  s.str.title();  s.str.capitalize()
-s.str.swapcase()
+s.str.lower()         # "alice", "bob"
+s.str.upper()         # "ALICE", "BOB"
+s.str.title()         # "Alice", "Bob"
 
 # Strip whitespace
-s.str.strip()           # both ends
+s.str.strip()         # both ends
 s.str.lstrip()
 s.str.rstrip()
-s.str.strip("$")        # strip specific chars
-
-# Pad / align
-s.str.pad(10, side="left", fillchar="0")
-s.str.zfill(5)          # zero-pad to width 5
-s.str.center(10)
-s.str.ljust(10);  s.str.rjust(10)
+s.str.strip("$")      # strip specific chars
 
 # Search / match
-s.str.contains("ali", case=False, na=False)   # returns bool Series
+s.str.contains("ali", case=False, na=False)   # bool Series
 s.str.startswith("A")
 s.str.endswith("e")
-s.str.match(r"^A\w+")   # regex match at start
-s.str.fullmatch(r"\d+") # entire string must match
-s.str.count("a")         # count occurrences
-s.str.find("li")         # index of first match
+s.str.match(r"^A\w+")
+s.str.count("a")      # count occurrences
 
 # Extract / split
 s.str.split(",")                    # list per cell
 s.str.split(",", expand=True)       # into separate columns
-s.str.split(",", n=1, expand=True)  # max 1 split
-s.str.get(0)                        # first element after split/list
 s.str.extract(r"(\d+)")             # first capture group → column
-s.str.extractall(r"(\d+)")          # all matches → multi-index rows
 s.str.findall(r"\d+")               # all matches → list per cell
 
 # Replace
 s.str.replace("old", "new")
-s.str.replace(r"\s+", " ", regex=True)   # regex replace
-s.str.removeprefix("Dr. ")         # Python 3.9+ style (pandas 1.4+)
-s.str.removesuffix(" PhD")
+s.str.replace(r"\s+", " ", regex=True)
 
 # Slice
-s.str[0:3]              # first 3 chars
-s.str[-4:]              # last 4 chars
-
-# Concatenate
-s.str.cat(sep=", ")     # join all strings in series
-s.str.cat(other_s, sep="-")   # element-wise join with another series
+s.str[0:3]            # first 3 chars
+s.str[-4:]            # last 4 chars
 
 # Test
 s.str.isdigit()
 s.str.isalpha()
-s.str.isalnum()
-s.str.isnumeric()
-s.str.isspace()
-s.str.isupper();  s.str.islower()
+s.str.len()           # length of each string
+```
 
-# Length
-s.str.len()
+**Sample output of `df["name"].str.upper()`:**
 
-# Encode / decode
-s.str.encode("utf-8")
-s.str.decode("utf-8")
+```
+0    ALICE
+1      BOB
+2    CAROL
+dtype: object
 ```
 
 ---
 
 ## Datetime Operations (`.dt` accessor)
 
+The `.dt` accessor unlocks date/time components and arithmetic on a datetime Series.
+
 ```python
 df["date"] = pd.to_datetime(df["date"])
 
 # Components
-df["date"].dt.year;  df["date"].dt.month;  df["date"].dt.day
-df["date"].dt.hour;  df["date"].dt.minute;  df["date"].dt.second
-df["date"].dt.microsecond;  df["date"].dt.nanosecond
+df["date"].dt.year
+df["date"].dt.month
+df["date"].dt.day
+df["date"].dt.hour
 df["date"].dt.dayofweek      # 0=Monday … 6=Sunday
-df["date"].dt.day_of_week    # alias
 df["date"].dt.day_name()     # "Monday", "Tuesday", ...
 df["date"].dt.month_name()   # "January", ...
-df["date"].dt.dayofyear      # 1–366
-df["date"].dt.weekofyear     # ISO week number (deprecated → isocalendar)
-df["date"].dt.isocalendar()  # returns df with year/week/day
 df["date"].dt.quarter        # 1–4
-df["date"].dt.is_month_start;  df["date"].dt.is_month_end
-df["date"].dt.is_year_start;   df["date"].dt.is_year_end
+df["date"].dt.is_month_start
 df["date"].dt.is_leap_year
 
 # Rounding
@@ -470,26 +559,28 @@ df["date"].dt.floor("H")     # floor to hour
 df["date"].dt.ceil("min")    # ceil to minute
 df["date"].dt.round("D")     # round to day
 
-# Conversion
-df["date"].dt.date           # Python date objects
-df["date"].dt.time           # Python time objects
-df["date"].dt.timestamp()    # POSIX timestamps
-df["date"].dt.to_period("M") # PeriodIndex (monthly)
-
 # Timezone
 df["date"].dt.tz_localize("UTC")
 df["date"].dt.tz_convert("US/Eastern")
 
 # Timedeltas
-df["date2"] - df["date1"]              # Series of Timedelta
+df["date2"] - df["date1"]                   # Series of Timedelta
 (df["date2"] - df["date1"]).dt.days
 (df["date2"] - df["date1"]).dt.total_seconds()
 
 # Date ranges
 pd.date_range("2024-01-01", periods=12, freq="M")
 pd.date_range("2024-01-01", "2024-12-31", freq="D")
-pd.bdate_range("2024-01-01", periods=5)   # business days
-pd.period_range("2024-01", periods=12, freq="M")
+pd.bdate_range("2024-01-01", periods=5)     # business days
+```
+
+**Sample output of `.dt` components:**
+
+```
+   date        year  month  day  dayofweek  day_name
+0  2024-03-15  2024      3   15          4   Friday
+1  2024-07-04  2024      7    4          3 Thursday
+2  2024-12-25  2024     12   25          2Wednesday
 ```
 
 ### Resample (time-series aggregation)
@@ -497,10 +588,10 @@ pd.period_range("2024-01", periods=12, freq="M")
 ```python
 df.set_index("date", inplace=True)
 
-df.resample("M").mean()       # monthly mean
-df.resample("W").sum()        # weekly sum
+df.resample("M").mean()    # monthly mean
+df.resample("W").sum()     # weekly sum
 df.resample("Q").agg({"revenue":"sum","users":"max"})
-df.resample("D").ffill()      # fill gaps by day
+df.resample("D").ffill()   # fill gaps by day
 df.resample("H").interpolate()
 ```
 
@@ -508,236 +599,343 @@ df.resample("H").interpolate()
 
 ## GroupBy
 
+GroupBy follows a **split → apply → combine** pattern: rows are split into groups, a function is applied to each group, and the results are combined back.
+
 ```python
 g = df.groupby("category")           # GroupBy object
 g = df.groupby(["cat","sub"])        # multi-level
 g = df.groupby("cat", sort=False)    # preserve original order
 g = df.groupby("cat", dropna=False)  # include NaN groups
+```
 
-# Single aggregation
+### Aggregation
+
+```python
 g["score"].mean()
 g["score"].sum()
 g["score"].count()
 g["score"].min()
 g["score"].max()
 g["score"].std()
-g["score"].median()
 g["score"].nunique()
-g["score"].first()
-g["score"].last()
 
-# Multiple aggregations at once
+# Multiple aggregations
 g.agg({"score": "mean", "age": "max"})
 g["score"].agg(["mean","std","count"])
-g.agg(
-    avg_score=("score","mean"),
-    max_age=("age","max"),
-    count=("name","count")
-)
 
-# Transform — returns same shape as input (for adding back to df)
+# Named aggregations (pandas 0.25+)
+g.agg(
+    avg_score = ("score", "mean"),
+    max_age   = ("age",   "max"),
+    count     = ("name",  "count")
+)
+```
+
+**Sample output:**
+
+```
+          avg_score  max_age  count
+category
+A              91.4       35      3
+B              85.0       30      2
+C              72.5       28      1
+```
+
+### Transform
+
+Returns a Series the **same shape as the input** — useful for adding computed columns back to the original DataFrame.
+
+```python
 df["score_zscore"] = g["score"].transform(lambda x: (x - x.mean()) / x.std())
 df["group_mean"]   = g["score"].transform("mean")
 df["rank_in_group"] = g["score"].transform("rank")
+```
 
+**Sample output:**
+
+```
+    name  grade  score  group_mean
+0  Alice      A   92.3        91.4
+1    Bob      B   85.0        85.0
+2  Carol      A   90.5        91.4
+```
+
+### Filter & Apply
+
+```python
 # Filter — keep groups meeting a condition
-df.groupby("cat").filter(lambda g: len(g) >= 5)     # groups with ≥5 rows
+df.groupby("cat").filter(lambda g: len(g) >= 5)
 df.groupby("cat").filter(lambda g: g["score"].mean() > 80)
 
 # Apply — most flexible (slow for large data)
 df.groupby("cat").apply(lambda g: g.nlargest(2, "score"))
 
-# Iterate over groups
+# Iterate
 for name, group_df in df.groupby("category"):
     print(name, group_df.shape)
-
-# Named aggregations (pandas 0.25+)
-result = df.groupby("cat").agg(
-    revenue_sum   = ("revenue", "sum"),
-    revenue_mean  = ("revenue", "mean"),
-    user_count    = ("user_id", "nunique"),
-    first_seen    = ("date", "min"),
-    last_seen     = ("date", "max")
-)
 ```
 
 ---
 
 ## Merging & Joining
 
-### merge (SQL-style joins)
+### `pd.merge` — SQL-style joins
 
 ```python
-# Inner join (default)
+# Inner join (default) — only matching rows from both
 pd.merge(left, right, on="key")
-pd.merge(left, right, on=["key1","key2"])          # composite key
+pd.merge(left, right, on=["key1","key2"])         # composite key
 pd.merge(left, right, left_on="l_id", right_on="r_id")
 
 # Join types
-pd.merge(left, right, on="key", how="left")        # left join
-pd.merge(left, right, on="key", how="right")       # right join
-pd.merge(left, right, on="key", how="outer")       # full outer join
-pd.merge(left, right, on="key", how="inner")       # inner join
-pd.merge(left, right, on="key", how="cross")       # cartesian product
+pd.merge(left, right, on="key", how="left")       # all left + matching right
+pd.merge(left, right, on="key", how="right")      # all right + matching left
+pd.merge(left, right, on="key", how="outer")      # all rows from both
+pd.merge(left, right, on="key", how="inner")      # only matching rows
+pd.merge(left, right, on="key", how="cross")      # cartesian product
 
-# Merge options
-pd.merge(left, right, on="key", suffixes=("_x","_y"))  # for overlapping cols
-pd.merge(left, right, on="key", validate="one_to_many")  # sanity check
-pd.merge(left, right, on="key", indicator=True)    # adds _merge column
-
-# Merge on index
-pd.merge(left, right, left_index=True, right_index=True)
-pd.merge(left, right, left_index=True, right_on="key")
+# Options
+pd.merge(left, right, on="key", suffixes=("_x","_y"))
+pd.merge(left, right, on="key", validate="one_to_many")
+pd.merge(left, right, on="key", indicator=True)   # adds _merge column
 ```
 
-### join (index-based)
+**Sample — inner vs left join:**
+
+```
+Left df:          Right df:
+id  name          id  score
+1   Alice         1   90
+2   Bob           3   85
+3   Carol         4   78
+
+inner join (id):  left join (id):
+id  name  score   id  name  score
+1   Alice  90     1   Alice  90.0
+3   Carol  85     2   Bob    NaN
+                  3   Carol  85.0
+```
+
+### `pd.concat` — stacking
 
 ```python
-df1.join(df2)                              # join on index
+pd.concat([df1, df2])                     # stack rows (axis=0)
+pd.concat([df1, df2], ignore_index=True)  # reset index
+pd.concat([df1, df2], axis=1)            # stack columns
+pd.concat([df1, df2], keys=["a","b"])    # hierarchical index
+pd.concat([df1, df2], join="inner")      # only common columns
+pd.concat([df1, df2], join="outer")      # all columns (default)
+```
+
+### `df.join` — index-based
+
+```python
+df1.join(df2)                  # join on index
 df1.join(df2, how="left")
-df1.join(df2, on="key")                    # df1 col → df2 index
-df1.join([df2, df3])                       # join multiple at once
-```
-
-### concat (stacking)
-
-```python
-pd.concat([df1, df2])                      # stack rows (axis=0)
-pd.concat([df1, df2], ignore_index=True)   # reset index
-pd.concat([df1, df2], axis=1)             # stack columns
-pd.concat([df1, df2], keys=["a","b"])     # hierarchical index
-pd.concat([df1, df2], join="inner")       # only common columns
-pd.concat([df1, df2], join="outer")       # all columns (default)
+df1.join(df2, on="key")        # df1 col → df2 index
+df1.join([df2, df3])           # join multiple at once
 ```
 
 ---
 
 ## Pivot Tables & Reshaping
 
-### pivot_table
+### `pivot_table`
+
+Like an Excel pivot table — groups data, aggregates values, and spreads one column's values across new columns.
 
 ```python
 df.pivot_table(
     values="revenue",
     index="region",
     columns="quarter",
-    aggfunc="sum",            # "mean","count","min","max" or function
+    aggfunc="sum",
     fill_value=0,
-    margins=True,             # add row/col totals
+    margins=True,           # add row/col totals
     margins_name="Total"
 )
-
-# Multiple values and aggfuncs
-df.pivot_table(values=["rev","cost"], index="region", aggfunc={"rev":"sum","cost":"mean"})
 ```
 
-### pivot (no aggregation — must be unique)
+**Sample output:**
 
-```python
-df.pivot(index="date", columns="product", values="sales")
+```
+quarter    Q1     Q2     Q3     Q4  Total
+region
+East     1200   1500   1800   2000   6500
+West      900   1100   1300   1600   4900
+Total    2100   2600   3100   3600  11400
 ```
 
-### melt (wide → long)
+### `melt` — wide → long
+
+Unpivots a DataFrame from wide format (one column per time period) to long format (one row per observation).
 
 ```python
 pd.melt(df, id_vars=["name"], value_vars=["q1","q2","q3","q4"],
         var_name="quarter", value_name="revenue")
-df.melt(id_vars=["id","name"])  # all other columns become rows
 ```
 
-### stack / unstack
+**Sample output:**
+
+```
+Before (wide):              After melt (long):
+name  q1   q2              name  quarter  revenue
+Alice 100  120             Alice      q1      100
+Bob   200  180             Alice      q2      120
+                           Bob        q1      200
+                           Bob        q2      180
+```
+
+### `stack` / `unstack`
 
 ```python
-df.stack()           # columns → innermost row index
-df.unstack()         # innermost row index → columns
+df.stack()           # columns → innermost row index (wide → long)
+df.unstack()         # innermost row index → columns (long → wide)
 df.unstack(level=0)  # specify which level
 ```
 
-### crosstab
+### `crosstab`
 
 ```python
 pd.crosstab(df["gender"], df["grade"])
-pd.crosstab(df["gender"], df["grade"], normalize="index")  # row percentages
+pd.crosstab(df["gender"], df["grade"], normalize="index")  # row %
 pd.crosstab(df["gender"], df["grade"], values=df["score"], aggfunc="mean")
 ```
 
 ---
 
-## Apply, Map & Applymap
+## Apply, Map & Pipe
 
 ```python
-# Apply along axis (row or column)
+# apply — along an axis (row or column)
 df.apply(np.sum, axis=0)                     # column sums
 df.apply(np.sum, axis=1)                     # row sums
 df.apply(lambda row: row["a"] + row["b"], axis=1)
 df["score"].apply(lambda x: "pass" if x >= 50 else "fail")
 
-# Map (element-wise on Series, pandas 2.1+)
-df["grade"].map({"A":4,"B":3,"C":2})         # dict lookup
+# map — element-wise on Series, dict lookup supported
+df["grade"].map({"A":4,"B":3,"C":2})        # dict lookup
 df["score"].map(lambda x: round(x, 1))
 
-# map vs apply on Series
-s.map(func)      # element-wise, NaN-aware, dict/Series supported
-s.apply(func)    # element-wise, can return Series (expands)
-
-# map on DataFrame (element-wise on whole df — renamed in 2.1)
-df.map(np.sqrt)                              # pandas 2.1+
-df.applymap(np.sqrt)                         # pandas < 2.1 (deprecated)
+# map on DataFrame (element-wise, pandas 2.1+)
+df.map(np.sqrt)                             # pandas 2.1+
+df.applymap(np.sqrt)                        # pandas < 2.1 (deprecated)
 
 # pipe — method chaining
 df.pipe(func1).pipe(func2, arg=val)
+```
+
+**Sample output of `.apply` for pass/fail:**
+
+```
+0    pass
+1    pass
+2    fail
+3    pass
+dtype: object
 ```
 
 ---
 
 ## Window Functions
 
-### Rolling
+### Rolling — moving window
+
+Computes a statistic over a **sliding window** of N rows. Essential for smoothing noisy time series.
 
 ```python
 df["score"].rolling(window=3).mean()        # 3-period moving average
 df["score"].rolling(window=3).sum()
 df["score"].rolling(window=3).std()
-df["score"].rolling(window=3, min_periods=1).mean()  # allow smaller windows at edges
-df["score"].rolling("7D").mean()            # time-based window (needs DatetimeIndex)
-df.rolling(3).agg({"score":"mean","age":"max"})
+df["score"].rolling(window=3, min_periods=1).mean()  # handle edges
+df["score"].rolling("7D").mean()            # time-based window
+```
+
+**Sample output:**
+
+```
+day  sales  ma3 (rolling mean)
+1    100    NaN
+2    120    NaN
+3     90    103.3
+4    150    120.0
+5    130    123.3
 ```
 
 ### Expanding
 
+Cumulative statistic from the start of the series — window grows with each row.
+
 ```python
-df["score"].expanding().mean()              # cumulative mean from start
-df["score"].expanding(min_periods=5).sum()  # start after 5 rows
+df["score"].expanding().mean()              # cumulative mean
+df["score"].expanding(min_periods=5).sum()
 ```
 
 ### Exponentially Weighted (EWM)
 
+Gives **more weight to recent values** — useful for trends where older data matters less.
+
 ```python
-df["score"].ewm(span=10).mean()             # exponential moving average
+df["score"].ewm(span=10).mean()    # exponential moving average
 df["score"].ewm(halflife=5).mean()
-df["score"].ewm(com=0.5).std()
-df["score"].ewm(alpha=0.3).mean()           # smoothing factor directly
+df["score"].ewm(alpha=0.3).mean()  # smoothing factor directly
+```
+
+### Lag Features — shift / diff / pct_change
+
+```python
+df["sales_lag1"]  = df["sales"].shift(1)      # value from 1 row ago
+df["sales_lag7"]  = df["sales"].shift(7)      # value from 7 rows ago
+df["sales_diff"]  = df["sales"].diff()        # change from previous row
+df["sales_pct"]   = df["sales"].pct_change()  # % change from previous row
+```
+
+**Sample output:**
+
+```
+day  sales  lag1  change  pct %
+1    100    NaN   NaN     NaN
+2    120    100    20    20.0
+3     90    120   -30   -25.0
+4    150     90    60    66.7
 ```
 
 ---
 
 ## Categorical Data
 
+**Categorical** dtype stores data as integer codes internally — memory-efficient for columns with few unique values (e.g. grade, status, city).
+
 ```python
 df["grade"] = df["grade"].astype("category")
-df["size"] = pd.Categorical(["S","M","L","M","S"], categories=["S","M","L"], ordered=True)
+df["size"] = pd.Categorical(["S","M","L","M","S"],
+                             categories=["S","M","L"], ordered=True)
 
-df["grade"].cat.categories          # Index(['A','B','C'])
-df["grade"].cat.codes               # integer codes (memory efficient)
-df["grade"].cat.ordered
+df["grade"].cat.categories              # Index(['A','B','C'])
+df["grade"].cat.codes                   # integer codes
+df["grade"].cat.ordered                 # True/False
 df["grade"].cat.add_categories(["F"])
 df["grade"].cat.remove_categories(["F"])
 df["grade"].cat.rename_categories({"A":"Excellent"})
 df["grade"].cat.reorder_categories(["C","B","A"])
-df["grade"].cat.set_categories(new_cats, ordered=True)
 df["grade"].cat.remove_unused_categories()
-pd.cut(df["age"], bins=[0,18,35,60,100], labels=["child","young","adult","senior"])
-pd.qcut(df["score"], q=4, labels=["Q1","Q2","Q3","Q4"])   # equal-frequency bins
+
+# Binning
+pd.cut(df["age"], bins=[0,18,35,60,100],
+       labels=["child","young","adult","senior"])
+
+pd.qcut(df["score"], q=4,
+        labels=["Q1","Q2","Q3","Q4"])   # equal-frequency bins
+```
+
+**Sample output of `pd.cut`:**
+
+```
+0    young     (age=28)
+1    adult     (age=45)
+2    senior    (age=70)
+3    child     (age=14)
+dtype: category
 ```
 
 ---
@@ -752,31 +950,26 @@ df.reset_index()                       # move index back to columns
 df.reset_index(drop=True)             # discard the index
 
 # MultiIndex
-df.index.get_level_values(0)           # outer level values
-df.index.get_level_values("region")
+df.index.get_level_values(0)
 df.loc[("West", "2024")]               # select with tuple
 df.xs("West", level="region")         # cross-section
-df.swaplevel(0, 1)                     # swap MultiIndex levels
+df.swaplevel(0, 1)
 df.sort_index(level=0)
 
-# Index alignment (automatic on arithmetic)
-s1 = pd.Series([1,2,3], index=["a","b","c"])
-s2 = pd.Series([10,20], index=["b","c"])
-s1 + s2       # a=NaN, b=22, c=23  — aligns on index
+# Reindex
+df.reindex(["a","b","c","d"])          # NaN for missing labels
+df.reindex(new_idx, fill_value=0)
 
-# Useful index methods
+# Useful checks
 df.index.is_unique
 df.index.is_monotonic_increasing
-df.reindex(["a","b","c","d"])          # reindex, NaN for missing
-df.reindex(new_idx, fill_value=0)
-df.reindex_like(other_df)             # match other df's index
 ```
 
 ---
 
 ## Data Cleaning — Complete Workflow
 
-### Inspect
+### Step 1 — Inspect
 
 ```python
 df.info()
@@ -784,112 +977,112 @@ df.describe(include="all")
 df.isna().sum()
 df.duplicated().sum()
 df.dtypes
-df.nunique()               # unique values per column
-df["col"].value_counts()   # frequency of each value
-df["col"].value_counts(normalize=True)   # proportions
-df["col"].value_counts(dropna=False)     # include NaN count
+df.nunique()
+df["col"].value_counts()
+df["col"].value_counts(normalize=True)
+df["col"].value_counts(dropna=False)
 ```
 
-### Standardise column names
+### Step 2 — Standardise column names
 
 ```python
 df.columns = df.columns.str.lower().str.strip().str.replace(" ","_")
 df.columns = df.columns.str.replace(r"[^a-zA-Z0-9_]","", regex=True)
 ```
 
-### Handle missing values (strategy depends on domain)
+### Step 3 — Handle missing values
 
 ```python
-# 1. Drop columns with > 50% missing
+# Drop columns with > 50% missing
 df = df.loc[:, df.isna().mean() < 0.5]
 
-# 2. Drop rows with any missing in key columns
+# Drop rows missing in key columns
 df = df.dropna(subset=["target","id"])
 
-# 3. Impute numeric: mean / median
+# Impute numeric — median
 from sklearn.impute import SimpleImputer
 imp = SimpleImputer(strategy="median")
 df[num_cols] = imp.fit_transform(df[num_cols])
 
-# 4. Impute categorical: most frequent
+# Impute categorical — most frequent
 imp_cat = SimpleImputer(strategy="most_frequent")
 df[cat_cols] = imp_cat.fit_transform(df[cat_cols])
 
-# 5. KNN imputation (better but slower)
+# KNN imputation (better but slower)
 from sklearn.impute import KNNImputer
 imputer = KNNImputer(n_neighbors=5)
 df[num_cols] = imputer.fit_transform(df[num_cols])
 ```
 
-### Fix data types
+### Step 4 — Fix data types
 
 ```python
-df["age"]    = pd.to_numeric(df["age"], errors="coerce")
-df["date"]   = pd.to_datetime(df["date"], errors="coerce")
-df["price"]  = df["price"].str.replace("[$,]","", regex=True).astype(float)
-df["phone"]  = df["phone"].str.replace(r"\D","", regex=True)  # digits only
+df["age"]   = pd.to_numeric(df["age"], errors="coerce")
+df["date"]  = pd.to_datetime(df["date"], errors="coerce")
+df["price"] = df["price"].str.replace("[$,]","", regex=True).astype(float)
+df["phone"] = df["phone"].str.replace(r"\D","", regex=True)  # digits only
 ```
 
-### Remove outliers
+### Step 5 — Remove outliers
 
 ```python
-# IQR method
+# IQR method — flag values outside 1.5× the interquartile range
 Q1 = df["score"].quantile(0.25)
 Q3 = df["score"].quantile(0.75)
 IQR = Q3 - Q1
 df = df[(df["score"] >= Q1 - 1.5*IQR) & (df["score"] <= Q3 + 1.5*IQR)]
 
-# Z-score method
+# Z-score method — flag values more than 3 std devs from mean
 from scipy import stats
 df = df[(np.abs(stats.zscore(df[num_cols])) < 3).all(axis=1)]
 
-# Cap (winsorise) instead of removing
+# Cap (winsorise) — clip instead of removing
 lower = df["score"].quantile(0.01)
 upper = df["score"].quantile(0.99)
 df["score"] = df["score"].clip(lower, upper)
 ```
 
-### Validate ranges and values
+### Step 6 — Validate
 
 ```python
 assert df["age"].between(0, 120).all(), "Invalid ages"
 assert df["score"].between(0, 100).all()
 assert df["email"].str.contains("@").all()
 invalid_mask = ~df["status"].isin(["active","inactive","pending"])
-df.loc[invalid_mask, "status"] = np.nan   # nullify invalid categories
+df.loc[invalid_mask, "status"] = np.nan
 ```
 
 ---
 
 ## Feature Engineering for Machine Learning
 
-### Encoding categorical variables
+### Encoding Categorical Variables
 
 ```python
-# Label encoding (ordinal)
+# Label encoding (ordinal relationship exists)
 df["grade_code"] = df["grade"].map({"A":3,"B":2,"C":1,"F":0})
 
-# One-hot encoding
+# One-hot encoding (no ordinal relationship)
 pd.get_dummies(df, columns=["city","category"], drop_first=True)
 pd.get_dummies(df, columns=["city"], prefix="city", dtype=int)
 
-# Target encoding (mean of target per category)
+# Target encoding — mean of target per category
 target_mean = df.groupby("city")["price"].transform("mean")
 df["city_encoded"] = target_mean
 
 # Frequency encoding
 freq = df["city"].value_counts(normalize=True)
 df["city_freq"] = df["city"].map(freq)
+```
 
-# sklearn OrdinalEncoder
-from sklearn.preprocessing import OrdinalEncoder, LabelEncoder
-enc = OrdinalEncoder()
-df[cat_cols] = enc.fit_transform(df[cat_cols])
+**Sample output of `get_dummies`:**
 
-# sklearn OneHotEncoder
-from sklearn.preprocessing import OneHotEncoder
-ohe = OneHotEncoder(sparse_output=False, drop="first")
-ohe_array = ohe.fit_transform(df[["city"]])
+```
+Before:               After (drop_first=True):
+city                  score  city_London  city_NYC
+NYC        →          90     0            1
+London                85     1            0
+Berlin                92     0            0
 ```
 
 ### Scaling / Normalisation
@@ -897,54 +1090,54 @@ ohe_array = ohe.fit_transform(df[["city"]])
 ```python
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
 
-# StandardScaler: zero mean, unit variance — good for linear models, PCA
+# StandardScaler — zero mean, unit variance (good for linear models, PCA)
 scaler = StandardScaler()
 df[num_cols] = scaler.fit_transform(df[num_cols])
 
-# MinMaxScaler: scales to [0,1] — good for neural nets
+# MinMaxScaler — scales to [0,1] (good for neural nets)
 scaler = MinMaxScaler()
 df[num_cols] = scaler.fit_transform(df[num_cols])
 
-# RobustScaler: uses median and IQR — good when outliers are present
+# RobustScaler — uses median and IQR (good when outliers are present)
 scaler = RobustScaler()
 df[num_cols] = scaler.fit_transform(df[num_cols])
 
-# Log transform for skewed features
+# Log transform — reduces right skew
 df["revenue_log"] = np.log1p(df["revenue"])   # log(1+x) handles zeros
 
-# Box-Cox / Yeo-Johnson (makes features more Gaussian)
+# Box-Cox / Yeo-Johnson — makes features more Gaussian
 from sklearn.preprocessing import PowerTransformer
 pt = PowerTransformer(method="yeo-johnson")    # handles negatives
 df[num_cols] = pt.fit_transform(df[num_cols])
 ```
 
-### Creating new features
+### Creating New Features
 
 ```python
 # Arithmetic
 df["bmi"]       = df["weight"] / (df["height"] / 100) ** 2
 df["age_score"] = df["age"] * df["score"]
 
-# Binning (continuous → categorical)
+# Binning
 df["age_group"] = pd.cut(df["age"], bins=[0,18,35,60,100],
                           labels=["teen","young","mid","senior"])
-df["score_q"]   = pd.qcut(df["score"], q=5, labels=["Q1","Q2","Q3","Q4","Q5"])
+df["score_q"]   = pd.qcut(df["score"], q=5,
+                           labels=["Q1","Q2","Q3","Q4","Q5"])
 
 # Date features
-df["year"]      = df["date"].dt.year
-df["month"]     = df["date"].dt.month
-df["dayofweek"] = df["date"].dt.dayofweek
-df["is_weekend"]= df["date"].dt.dayofweek >= 5
-df["days_since"]= (pd.Timestamp.today() - df["date"]).dt.days
-df["quarter"]   = df["date"].dt.quarter
+df["year"]       = df["date"].dt.year
+df["month"]      = df["date"].dt.month
+df["dayofweek"]  = df["date"].dt.dayofweek
+df["is_weekend"] = df["date"].dt.dayofweek >= 5
+df["days_since"] = (pd.Timestamp.today() - df["date"]).dt.days
+df["quarter"]    = df["date"].dt.quarter
 
 # Text features
-df["name_length"]  = df["name"].str.len()
-df["word_count"]   = df["description"].str.split().str.len()
-df["has_email"]    = df["contact"].str.contains("@", na=False)
-df["digit_count"]  = df["phone"].str.count(r"\d")
+df["name_length"] = df["name"].str.len()
+df["word_count"]  = df["description"].str.split().str.len()
+df["has_email"]   = df["contact"].str.contains("@", na=False)
 
-# Lag and rolling features (for time series)
+# Lag and rolling (time series)
 df = df.sort_values("date")
 df["sales_lag1"]  = df["sales"].shift(1)
 df["sales_lag7"]  = df["sales"].shift(7)
@@ -953,7 +1146,7 @@ df["sales_diff"]  = df["sales"].diff()
 df["sales_pct"]   = df["sales"].pct_change()
 
 # Interaction features
-df["age_x_score"] = df["age"] * df["score"]
+df["age_x_score"]   = df["age"] * df["score"]
 df["age_div_score"] = df["age"] / (df["score"] + 1e-9)   # avoid div-by-zero
 ```
 
@@ -962,39 +1155,37 @@ df["age_div_score"] = df["age"] / (df["score"] + 1e-9)   # avoid div-by-zero
 ```python
 from sklearn.model_selection import train_test_split
 
-# Split DataFrame
-train, test = train_test_split(df, test_size=0.2, random_state=42)
-
-# Split features and target
 X = df.drop("target", axis=1)
 y = df["target"]
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,
-                                                      random_state=42,
-                                                      stratify=y)  # for classification
 
-# Temporal split (no shuffling for time series)
+# Random split (classification — use stratify to preserve class balance)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+# Temporal split (time series — never shuffle)
 split_date = "2024-01-01"
 train = df[df["date"] < split_date]
 test  = df[df["date"] >= split_date]
 ```
 
-### Preparing final feature matrix
+### Preparing the Final Feature Matrix
 
 ```python
-# Select feature subsets
-num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
-cat_cols = df.select_dtypes(include=["object","category"]).columns.tolist()
-bool_cols= df.select_dtypes(include=["bool"]).columns.tolist()
+# Select by dtype
+num_cols  = df.select_dtypes(include=[np.number]).columns.tolist()
+cat_cols  = df.select_dtypes(include=["object","category"]).columns.tolist()
+bool_cols = df.select_dtypes(include=["bool"]).columns.tolist()
 
-# Remove columns leaking the target or not useful
+# Drop non-feature columns
 drop_cols = ["id","name","date","target"]
 X = df.drop(columns=drop_cols)
 
-# Check for infinite values (will crash most models)
+# Handle infinite values (crash most models)
 np.isinf(df[num_cols]).sum()
 df[num_cols] = df[num_cols].replace([np.inf, -np.inf], np.nan)
 
-# Final check before model training
+# Final assertions
 assert X.isna().sum().sum() == 0, "Still has NaN!"
 assert np.isinf(X.values).sum() == 0, "Still has Inf!"
 print(X.shape)
@@ -1003,6 +1194,8 @@ print(X.shape)
 ---
 
 ## sklearn Pipeline Integration
+
+A **Pipeline** chains preprocessing and modelling steps into one object — preventing data leakage and simplifying cross-validation.
 
 ```python
 from sklearn.pipeline import Pipeline
@@ -1034,12 +1227,13 @@ model = Pipeline([
 ])
 
 model.fit(X_train, y_train)
-model.predict(X_test)
-model.score(X_test, y_test)
+preds = model.predict(X_test)
+score = model.score(X_test, y_test)
 
-# Extract feature names after transformation
-ohe_features = model["prep"].named_transformers_["cat"]["ohe"].get_feature_names_out(cat_cols)
-all_features = num_cols + list(ohe_features)
+# Extract feature names after OHE transformation
+ohe_features  = model["prep"].named_transformers_["cat"]["ohe"] \
+                              .get_feature_names_out(cat_cols)
+all_features  = num_cols + list(ohe_features)
 ```
 
 ---
@@ -1047,33 +1241,33 @@ all_features = num_cols + list(ohe_features)
 ## Performance & Memory Optimisation
 
 ```python
-# Check memory usage
+# Check memory
 df.memory_usage(deep=True).sum() / 1e6   # MB
 
-# Downcast numerics
+# Downcast numerics — use smaller dtypes
 df[int_cols]   = df[int_cols].apply(pd.to_numeric, downcast="integer")
 df[float_cols] = df[float_cols].apply(pd.to_numeric, downcast="float")
 
-# Use category for low-cardinality strings (often 5–10× savings)
+# Category for low-cardinality strings (5–10× savings)
 for col in cat_cols:
-    if df[col].nunique() / len(df) < 0.1:   # < 10% unique
+    if df[col].nunique() / len(df) < 0.1:   # < 10% unique values
         df[col] = df[col].astype("category")
 
-# Read in chunks for large files
+# Read large files in chunks
 chunks = []
 for chunk in pd.read_csv("big.csv", chunksize=100_000):
     processed = chunk[chunk["value"] > 0]   # filter early
     chunks.append(processed)
 df = pd.concat(chunks, ignore_index=True)
 
-# Use parquet instead of CSV for speed + type preservation
+# Parquet — faster and type-preserving vs CSV
 df.to_parquet("data.parquet")
-df = pd.read_parquet("data.parquet", columns=["a","b"])   # column pruning
+df = pd.read_parquet("data.parquet", columns=["a","b"])  # column pruning
 
-# Copy-on-Write (pandas 2.0+) — avoid SettingWithCopyWarning
+# Copy-on-Write (pandas 2.0+) — avoids SettingWithCopyWarning
 pd.options.mode.copy_on_write = True
 
-# eval and query for large DataFrames (uses numexpr, avoids temporaries)
+# eval and query — avoids temporary arrays (faster on large dfs)
 result = df.query("age > 30 and score > 80")
 df["z"] = df.eval("(score - score.mean()) / score.std()")
 ```
@@ -1088,16 +1282,16 @@ pd.set_option("display.max_columns", 50)
 pd.set_option("display.width", 200)
 pd.set_option("display.float_format", "{:.2f}".format)
 pd.set_option("display.max_colwidth", 100)
-pd.set_option("mode.chained_assignment", None)    # silence SettingWithCopy
+pd.set_option("mode.chained_assignment", None)  # silence SettingWithCopy
 
-# Context manager (temporary)
+# Context manager — temporary change
 with pd.option_context("display.max_rows", 20):
     print(df)
 
 # Reset to defaults
 pd.reset_option("all")
 
-# Useful global settings for data science
+# Recommended global settings
 pd.options.display.float_format = "{:,.3f}".format
 pd.options.mode.copy_on_write = True     # pandas 2.0+ best practice
 ```
@@ -1106,39 +1300,24 @@ pd.options.mode.copy_on_write = True     # pandas 2.0+ best practice
 
 ## Quick Reference Card
 
-```
-I/O             read_csv / read_excel / read_json / read_parquet / read_sql
-                to_csv / to_excel / to_json / to_parquet / to_sql
-
-Select          df["col"]  df[["a","b"]]
-                .loc[label, col]  .iloc[pos, col]  .at[lbl,col]  .iat[pos,col]
-                .query("age > 30")  boolean mask
-
-Clean           isna/notna  dropna  fillna  ffill/bfill  interpolate
-                replace  drop_duplicates  duplicated  astype  to_numeric  to_datetime
-                str.strip/lower/replace/contains/extract  clip (outliers)
-
-Engineer        pd.cut / pd.qcut  get_dummies  shift / diff / pct_change
-                rolling / ewm / expanding  dt.year/month/dayofweek
-
-GroupBy         groupby → agg / transform / filter / apply
-                Named agg: agg(alias=("col","func"))
-
-Merge           pd.merge(how="left/right/inner/outer/cross")
-                pd.concat(axis=0/1)  df.join()
-
-Reshape         pivot_table  pivot  melt  stack  unstack  crosstab
-
-Scale/Encode    StandardScaler  MinMaxScaler  RobustScaler  PowerTransformer
-                LabelEncoder  OrdinalEncoder  OneHotEncoder  pd.get_dummies
-
-ML Prep         train_test_split(stratify=y)  ColumnTransformer  Pipeline
-                SimpleImputer  KNNImputer  select_dtypes  replace inf/nan
-
-Optimise        astype("category")  downcast  read_parquet  chunksize
-                query / eval  copy_on_write  memory_usage(deep=True)
-```
+| Category | Key functions |
+|---|---|
+| **I/O** | `read_csv` · `read_excel` · `read_json` · `read_parquet` · `read_sql` · `to_csv` · `to_excel` · `to_parquet` |
+| **Select** | `df["col"]` · `df[["a","b"]]` · `.loc[label,col]` · `.iloc[pos,col]` · `.at` · `.iat` · `.query()` · boolean mask |
+| **Inspect** | `.info()` · `.describe()` · `.dtypes` · `.shape` · `.nunique()` · `.value_counts()` |
+| **Clean** | `isna` · `dropna` · `fillna` · `ffill` · `bfill` · `interpolate` · `replace` · `drop_duplicates` · `clip` |
+| **Types** | `astype` · `to_numeric` · `to_datetime` · `convert_dtypes` |
+| **Strings** | `.str.strip` · `.str.lower` · `.str.replace` · `.str.contains` · `.str.extract` · `.str.split` |
+| **Datetime** | `.dt.year` · `.dt.month` · `.dt.dayofweek` · `.dt.day_name()` · `resample` · `date_range` |
+| **GroupBy** | `groupby → agg / transform / filter / apply` · named agg: `agg(alias=("col","func"))` |
+| **Merge** | `pd.merge(how=inner/left/right/outer/cross)` · `pd.concat(axis=0/1)` · `df.join()` |
+| **Reshape** | `pivot_table` · `pivot` · `melt` · `stack` · `unstack` · `crosstab` |
+| **Engineer** | `pd.cut` · `pd.qcut` · `get_dummies` · `shift` · `diff` · `pct_change` · `rolling` · `ewm` |
+| **Scale** | `StandardScaler` · `MinMaxScaler` · `RobustScaler` · `PowerTransformer` · `np.log1p` |
+| **Encode** | `LabelEncoder` · `OrdinalEncoder` · `OneHotEncoder` · `pd.get_dummies` |
+| **ML Prep** | `train_test_split(stratify=y)` · `ColumnTransformer` · `Pipeline` · `SimpleImputer` · `KNNImputer` |
+| **Optimise** | `astype("category")` · downcast · `read_parquet` · `chunksize` · `query` · `eval` · `copy_on_write` |
 
 ---
 
-*Pandas version this covers: 1.5 – 2.2. Docs: https://pandas.pydata.org/docs/*
+*Covers pandas 1.5–2.2. Docs: https://pandas.pydata.org/docs/*
