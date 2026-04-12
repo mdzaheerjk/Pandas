@@ -1,4 +1,4 @@
-# Pandas Complete Reference Notes
+# Pandas — Complete Notes for ML / DL / Gen AI / Agentic AI Engineers
 ## Data Wrangling, Cleaning & Machine Learning Prep
 
 ---
